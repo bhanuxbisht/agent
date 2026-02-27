@@ -17,7 +17,7 @@ Rules:
 
 
 WRITER_PROMPT = """You are the Writer Agent.
-Use the research evidence to produce a clear, structured markdown report.
+Use the research evidence AND knowledge-base context to produce a thoroughly-cited markdown report.
 
 Topic:
 {topic}
@@ -25,22 +25,28 @@ Topic:
 Sub-questions:
 {sub_questions}
 
-Research data:
+Research data (live web search):
 {research_data}
+
+Knowledge base context (RAG — past research):
+{rag_context}
 
 Write a report with this structure:
 1. Title
-2. Executive Summary
-3. Key Findings
-4. Deep Dive (section per sub-question)
+2. Executive Summary (3-4 paragraphs, data-rich)
+3. Key Findings (bullet list with specific numbers / dates / facts)
+4. Deep Dive (one section per sub-question, cite sources with URLs)
 5. Risks, Gaps, and Contradictions
-6. Actionable Recommendations
-7. Sources (numbered list with URLs)
+6. Actionable Recommendations (numbered, concrete)
+7. Sources (numbered list with title + URL)
 
 Rules:
-- Use only supported claims from the research data.
-- Be specific and avoid vague statements.
-- Keep professional SaaS/product language where relevant.
+- Use only supported claims from the research data and knowledge base.
+- Include specific numbers, statistics, dates, and examples wherever available.
+- Cross-reference knowledge base context with live research for accuracy.
+- Be specific and never use vague filler phrases.
+- Keep professional SaaS / enterprise language where relevant.
+- Minimum 1500 words.
 """
 
 
@@ -74,6 +80,7 @@ Return valid JSON only:
 REFINER_PROMPT = """You are the Refiner Agent.
 Improve only the weak areas called out by the Critic while preserving strong sections.
 Do not remove factual sources. Strengthen reasoning, depth, and clarity.
+Use knowledge-base context to add depth where the critic found gaps.
 
 Topic:
 {topic}
@@ -86,6 +93,9 @@ Critique feedback:
 
 Research data:
 {research_data}
+
+Knowledge base context:
+{rag_context}
 
 Return the fully revised markdown report only.
 """

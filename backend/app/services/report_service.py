@@ -23,6 +23,7 @@ def create_initial_state(topic: str) -> ResearchState:
         topic=topic,
         sub_questions=[],
         research_data=[],
+        rag_context="",
         draft_report="",
         critique="",
         score=0,

@@ -9,6 +9,7 @@ class ResearchState(TypedDict):
     topic: str
     sub_questions: List[str]
     research_data: List[Dict[str, Any]]
+    rag_context: str
     draft_report: str
     critique: str
     score: int

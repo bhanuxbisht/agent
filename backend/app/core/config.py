@@ -41,10 +41,20 @@ class Settings(BaseSettings):
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _parse_cors_origins(cls, value: str | List[str]) -> List[str]:
+        import json as _json
+
         if isinstance(value, list):
             return value
         if isinstance(value, str):
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
+            stripped = value.strip()
+            if stripped.startswith("["):
+                try:
+                    parsed = _json.loads(stripped)
+                    if isinstance(parsed, list):
+                        return [str(o).strip() for o in parsed if str(o).strip()]
+                except _json.JSONDecodeError:
+                    pass
+            return [origin.strip() for origin in stripped.split(",") if origin.strip()]
         raise ValueError("cors_origins must be a list or comma-separated string")
 
 

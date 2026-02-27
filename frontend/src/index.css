@@ -1,36 +1,108 @@
-@import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --paper-a: #f5f3ee;
-  --paper-b: #fffaf0;
-  --ink: #1f2430;
-  --pine: #155e63;
-  --ember: #b45309;
-  --moss: #3f6212;
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Source Serif 4", serif;
-  color: var(--ink);
-  background:
-    radial-gradient(circle at 14% 12%, rgba(21, 94, 99, 0.12), transparent 42%),
-    radial-gradient(circle at 86% 18%, rgba(180, 83, 9, 0.1), transparent 36%),
-    linear-gradient(140deg, var(--paper-a), var(--paper-b));
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  color: #1a1a2e;
+  overflow-x: hidden;
+  background-color: #f8fafc;
+  background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+/* ── Soft white overlay to ensure readability ── */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 100%);
+  pointer-events: none;
+}
+
+/* Remove old cloud layers */
+body::after {
+  display: none;
 }
 
 #root {
   min-height: 100vh;
+  position: relative;
 }
 
-.glass-panel {
-  background: rgba(255, 255, 255, 0.64);
-  border: 1px solid rgba(31, 36, 48, 0.09);
-  box-shadow: 0 14px 40px rgba(31, 36, 48, 0.08);
-  backdrop-filter: blur(4px);
+/* ── Glass panels ── */
+.glass {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* ── Active agent glow ── */
+.glow-active {
+  box-shadow: 0 0 20px rgba(108, 71, 255, 0.12), 0 4px 12px rgba(108, 71, 255, 0.08);
+}
+.glow-done {
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.1);
+}
+
+/* ── Stagger children animations ── */
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }
+
+/* ── Print ── */
+@media print {
+  body, body::before, body::after { background: #fff !important; }
+  header, aside, form, button, .no-print { display: none !important; }
+  .prose { max-width: 100%; }
 }

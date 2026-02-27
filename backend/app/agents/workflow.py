@@ -20,6 +20,7 @@ from app.agents.prompts import (
 )
 from app.core.config import Settings
 from app.schemas.state import ResearchState
+from app.services.rag_service import RAGService
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +130,7 @@ def build_research_graph(
     async def researcher_node(state: ResearchState) -> Dict[str, Any]:
         sub_questions = state.get("sub_questions", [])
         if not sub_questions:
-            return {"research_data": []}
+            return {"research_data": [], "rag_context": ""}
 
         tasks = [_search_one(question) for question in sub_questions]
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -149,13 +150,26 @@ def build_research_graph(
             else:
                 research_data.append(result)
         logger.info("Researcher finished %d search blocks", len(research_data))
-        return {"research_data": research_data}
+
+        # ── RAG: index new research and retrieve past knowledge ──
+        rag = RAGService.get_instance()
+        rag.index_research(state["topic"], research_data)
+
+        rag_results = rag.retrieve(state["topic"], n_results=10)
+        rag_context = "\n\n".join(
+            r["text"] for r in rag_results
+        ) if rag_results else "No past knowledge available."
+        logger.info("RAG retrieved %d relevant chunks (kb size: %d)",
+                     len(rag_results), rag.document_count)
+
+        return {"research_data": research_data, "rag_context": rag_context}
 
     async def writer_node(state: ResearchState) -> Dict[str, Any]:
         prompt = WRITER_PROMPT.format(
             topic=state["topic"],
             sub_questions="\n".join(f"- {q}" for q in state.get("sub_questions", [])),
             research_data=_render_sources(state.get("research_data", [])),
+            rag_context=state.get("rag_context", "No past knowledge available."),
         )
         response = await llm.ainvoke(prompt)
         return {"draft_report": response.content}
@@ -183,6 +197,7 @@ def build_research_graph(
             draft_report=state.get("draft_report", ""),
             critique=state.get("critique", ""),
             research_data=_render_sources(state.get("research_data", [])),
+            rag_context=state.get("rag_context", "No past knowledge available."),
         )
         response = await llm.ainvoke(prompt)
         return {"draft_report": response.content}
