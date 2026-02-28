@@ -1,101 +1,245 @@
-"""Prompt templates used across the multi-agent workflow."""
+"""Prompt templates for the bb /create multi-agent content production pipeline."""
 
-PLANNER_PROMPT = """You are the Planner Agent in a multi-agent research system.
-Task: Break this topic into 4-5 focused, non-overlapping research sub-questions.
+# ─────────────────────────────────────────────────────────────
+# Agent 1: Content Analyzer
+# ─────────────────────────────────────────────────────────────
+ANALYZER_PROMPT = """You are the Content Analyzer Agent in a multi-agent content production system.
 
-Topic: {topic}
+User's creative brief:
+{prompt}
 
-Rules:
-1) Cover breadth and depth.
-2) Sub-questions must be concrete and searchable on the web.
-3) Avoid duplicate intent.
-4) Return only valid JSON matching this schema:
+Content type: {content_type}
+Target duration: {duration_seconds} seconds
+Platform: {platform}
+
+Analyze the brief and produce a structured analysis. Determine:
+1. **Language** — What language to produce the script in (detect from prompt or default to English)
+2. **Region** — Geographic / cultural target audience
+3. **Genre** — entertainment, educational, motivational, cinematic, comedy, drama, documentary, tutorial, etc.
+4. **Tone** — casual, professional, dramatic, humorous, inspirational, etc.
+5. **Target audience** — age range, interests, demographics
+6. **Visual style** — cinematic, vlog, animated, minimalist, raw, etc.
+7. **Key themes** — 3-5 core themes extracted from the brief
+8. **Platform optimization** — aspect ratio, ideal duration, trends for this platform
+
+Return ONLY valid JSON:
 {{
-  "sub_questions": ["question 1", "question 2", "question 3", "question 4"]
+  "language": "Hindi",
+  "region": "India",
+  "genre": "cinematic",
+  "tone": "dramatic",
+  "target_audience": "18-35, travel enthusiasts",
+  "visual_style": "cinematic wide shots",
+  "key_themes": ["monsoon", "Jaipur", "heritage"],
+  "platform_optimization": {{
+    "aspect_ratio": "9:16",
+    "ideal_duration": 30,
+    "trending_elements": ["trending audio", "quick cuts"]
+  }}
 }}
 """
 
+# ─────────────────────────────────────────────────────────────
+# Agent 2: Script Writer
+# ─────────────────────────────────────────────────────────────
+SCRIPT_WRITER_PROMPT = """You are the Script Writer Agent. Generate a production-ready script.
 
-WRITER_PROMPT = """You are the Writer Agent.
-Use the research evidence AND knowledge-base context to produce a thoroughly-cited markdown report.
+Creative brief: {prompt}
+Content type: {content_type}
+Duration: {duration_seconds} seconds
+Platform: {platform}
 
-Topic:
-{topic}
+Content analysis:
+{analysis}
 
-Sub-questions:
-{sub_questions}
+Write a complete script that includes:
+1. **Opening hook** (first 3 seconds — grab attention)
+2. **Visual directions** — [VISUAL: description] for each shot
+3. **Dialogue / Voiceover** — exact text in the target language: {language}
+4. **Sound cues** — [SFX: description] and [MUSIC: description]
+5. **Text overlays** — [TEXT: what appears on screen]
+6. **Closing CTA** — call to action appropriate for {platform}
 
-Research data (live web search):
-{research_data}
+Format guidelines:
+- Use the target language ({language}) for all dialogue and voiceover
+- Include English translations in parentheses if not English
+- Be specific about camera angles: wide, close-up, tracking, aerial, etc.
+- Time-code approximate each section
+- Keep total script aligned to {duration_seconds} seconds
 
-Knowledge base context (RAG — past research):
-{rag_context}
-
-Write a report with this structure:
-1. Title
-2. Executive Summary (3-4 paragraphs, data-rich)
-3. Key Findings (bullet list with specific numbers / dates / facts)
-4. Deep Dive (one section per sub-question, cite sources with URLs)
-5. Risks, Gaps, and Contradictions
-6. Actionable Recommendations (numbered, concrete)
-7. Sources (numbered list with title + URL)
-
-Rules:
-- Use only supported claims from the research data and knowledge base.
-- Include specific numbers, statistics, dates, and examples wherever available.
-- Cross-reference knowledge base context with live research for accuracy.
-- Be specific and never use vague filler phrases.
-- Keep professional SaaS / enterprise language where relevant.
-- Minimum 1500 words.
+Return the full script as formatted text.
 """
 
+# ─────────────────────────────────────────────────────────────
+# Agent 3: Timeline Planner
+# ─────────────────────────────────────────────────────────────
+TIMELINE_PLANNER_PROMPT = """You are the Timeline Planner Agent. Create a shot-by-shot production timeline.
 
-CRITIC_PROMPT = """You are the Critic Agent.
-Evaluate the report on:
-- Accuracy (0-10)
-- Depth (0-10)
-- Clarity (0-10)
+Creative brief: {prompt}
+Duration: {duration_seconds} seconds
+Platform: {platform}
 
-Then produce:
-1) An overall integer score from 1-10
-2) Precise revision instructions for weak sections
+Script:
+{script}
 
-Topic:
-{topic}
+Content analysis:
+{analysis}
 
-Report:
-{draft_report}
+Break down the script into a precise shot-by-shot timeline. For each shot, specify:
+1. **timestamp** — start and end time (e.g., "00:00 - 00:03")
+2. **shot_type** — wide, medium, close-up, aerial, tracking, POV, etc.
+3. **visual** — exactly what is on screen
+4. **audio** — dialogue, music, SFX that plays during this shot
+5. **text_overlay** — any on-screen text (if any)
+6. **transition** — how this shot transitions to the next (cut, dissolve, swipe, zoom, etc.)
+7. **notes** — production notes (lighting, props, location, etc.)
 
-Research data:
-{research_data}
+Return ONLY a valid JSON array:
+[
+  {{
+    "timestamp": "00:00 - 00:03",
+    "shot_type": "close-up",
+    "visual": "Raindrops hitting palace steps",
+    "audio": "Ambient rain + soft sitar",
+    "text_overlay": "Jaipur in Monsoon",
+    "transition": "slow dissolve",
+    "notes": "Shoot at Amer Fort, golden hour"
+  }}
+]
+"""
 
-Return valid JSON only:
+# ─────────────────────────────────────────────────────────────
+# Agent 4: Enhancement Agent
+# ─────────────────────────────────────────────────────────────
+ENHANCEMENT_PROMPT = """You are the Enhancement Agent. Suggest improvements to maximize content impact.
+
+Creative brief: {prompt}
+Content type: {content_type}
+Platform: {platform}
+Duration: {duration_seconds} seconds
+
+Script:
+{script}
+
+Timeline:
+{timeline}
+
+Analysis:
+{analysis}
+
+Provide detailed enhancement suggestions:
+
+1. **hooks** — 3 alternative opening hooks ranked by effectiveness
+2. **music_suggestions** — 5 specific royalty-free music recommendations with mood/genre (use real track names or describe the vibe precisely)
+3. **color_grading** — specific color palette and grading style (e.g., "warm orange teal, lifted blacks, desaturated greens")
+4. **transitions** — creative transition ideas beyond basic cuts
+5. **hashtags** — 15-20 relevant hashtags for {platform}
+6. **caption** — 3 caption options (short, medium, story-style)
+7. **posting_strategy** — best time to post, frequency, A/B test ideas
+8. **thumbnail_ideas** — 3 thumbnail concepts with text overlay suggestions
+9. **accessibility** — subtitle style, alt-text, audio description notes
+10. **viral_elements** — what makes this shareable, emotional triggers, relatability hooks
+
+Return ONLY valid JSON:
 {{
-  "score": 7,
-  "critique": "Short but actionable feedback with bullet points."
+  "hooks": ["hook 1", "hook 2", "hook 3"],
+  "music_suggestions": [{{"name": "...", "mood": "...", "source": "..."}}],
+  "color_grading": "...",
+  "transitions": ["..."],
+  "hashtags": ["..."],
+  "captions": [{{"style": "short", "text": "..."}}],
+  "posting_strategy": {{...}},
+  "thumbnail_ideas": ["..."],
+  "accessibility": {{...}},
+  "viral_elements": ["..."]
 }}
 """
 
+# ─────────────────────────────────────────────────────────────
+# Agent 5: Story Architect
+# ─────────────────────────────────────────────────────────────
+STORY_ARCHITECT_PROMPT = """You are the Story Architect Agent. Structure the narrative for maximum emotional impact.
 
-REFINER_PROMPT = """You are the Refiner Agent.
-Improve only the weak areas called out by the Critic while preserving strong sections.
-Do not remove factual sources. Strengthen reasoning, depth, and clarity.
-Use knowledge-base context to add depth where the critic found gaps.
+Creative brief: {prompt}
+Content type: {content_type}
+Duration: {duration_seconds} seconds
 
-Topic:
-{topic}
+Script:
+{script}
 
-Current draft:
-{draft_report}
+Analysis:
+{analysis}
 
-Critique feedback:
+Design the narrative architecture:
+
+1. **narrative_arc** — describe the story structure (hero's journey, 3-act, before/after, problem-solution, etc.)
+2. **pacing** — moment-by-moment pacing guide (slow build → peak → resolution)
+3. **emotion_map** — for each major timestamp, what emotion should the viewer feel
+4. **tension_points** — where to build and release tension
+5. **character_notes** — if there are characters, their motivations and arcs
+6. **payoff** — what is the emotional/intellectual payoff at the end
+7. **rewatch_hooks** — details that reward rewatching (hidden details, foreshadowing)
+8. **series_potential** — how this can become a series or recurring format
+
+Return ONLY valid JSON:
+{{
+  "narrative_arc": "...",
+  "pacing": [...],
+  "emotion_map": [...],
+  "tension_points": [...],
+  "character_notes": "...",
+  "payoff": "...",
+  "rewatch_hooks": ["..."],
+  "series_potential": "..."
+}}
+"""
+
+# ─────────────────────────────────────────────────────────────
+# Critic & Refiner (quality loop)
+# ─────────────────────────────────────────────────────────────
+CRITIC_PROMPT = """You are the Quality Critic for a content production pipeline.
+
+Evaluate the complete production blueprint on:
+- **Hook strength** (0-10): Will the first 3 seconds stop the scroll?
+- **Script quality** (0-10): Is the script engaging, clear, and well-paced?
+- **Production feasibility** (0-10): Can a solo creator actually shoot this?
+- **Platform fit** (0-10): Is this optimized for {platform}?
+- **Emotional impact** (0-10): Does this make viewers feel something?
+
+Creative brief: {prompt}
+Content type: {content_type}
+Platform: {platform}
+
+Script:
+{script}
+
+Timeline:
+{timeline}
+
+Enhancements:
+{enhancements}
+
+Return ONLY valid JSON:
+{{
+  "score": 8,
+  "critique": "Specific actionable feedback with bullet points for improvement."
+}}
+"""
+
+REFINER_PROMPT = """You are the Script Refiner Agent.
+Improve the script based on the critic's feedback. Keep what works, fix what doesn't.
+
+Creative brief: {prompt}
+Platform: {platform}
+
+Current script:
+{script}
+
+Critic feedback:
 {critique}
 
-Research data:
-{research_data}
+Analysis:
+{analysis}
 
-Knowledge base context:
-{rag_context}
-
-Return the fully revised markdown report only.
+Rewrite the entire improved script. Return the full refined script text only.
 """

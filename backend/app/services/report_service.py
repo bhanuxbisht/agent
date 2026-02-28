@@ -1,4 +1,4 @@
-"""Service layer that runs the LangGraph workflow and streams progress."""
+"""Service layer that runs the LangGraph creator pipeline and streams progress."""
 
 from __future__ import annotations
 
@@ -8,69 +8,85 @@ from functools import lru_cache
 from typing import Any, AsyncGenerator, Dict
 
 from langchain_groq import ChatGroq
-from tavily import TavilyClient
 
-from app.agents.workflow import build_research_graph
+from app.agents.workflow import build_creator_graph
 from app.core.config import Settings, get_settings
-from app.schemas.state import ResearchState
+from app.schemas.state import CreatorState
 
 logger = logging.getLogger(__name__)
 
 
-def create_initial_state(topic: str) -> ResearchState:
+def create_initial_state(
+    prompt: str,
+    content_type: str = "reel",
+    duration_seconds: int = 30,
+    platform: str = "instagram",
+) -> CreatorState:
     """Construct the initial shared state for each run."""
-    return ResearchState(
-        topic=topic,
-        sub_questions=[],
-        research_data=[],
-        rag_context="",
-        draft_report="",
+    return CreatorState(
+        prompt=prompt,
+        content_type=content_type,
+        duration_seconds=duration_seconds,
+        platform=platform,
+        analysis={},
+        script="",
+        timeline=[],
+        enhancements={},
+        story_structure={},
         critique="",
         score=0,
         iteration_count=0,
-        final_report="",
+        final_blueprint="",
     )
 
 
-class ReportWorkflowService:
-    """Stateless orchestrator wrapper around a compiled LangGraph."""
+class CreatorWorkflowService:
+    """Stateless orchestrator wrapper around the compiled creator LangGraph."""
 
     def __init__(self, settings: Settings):
         self.settings = settings
         if not settings.groq_api_key:
             raise ValueError("Missing GROQ_API_KEY in environment.")
-        if not settings.tavily_api_key:
-            raise ValueError("Missing TAVILY_API_KEY in environment.")
         self.llm = ChatGroq(
             model=settings.groq_model,
             api_key=settings.groq_api_key,
-            temperature=0.2,
+            temperature=0.4,
         )
-        self.tavily_client = TavilyClient(api_key=settings.tavily_api_key)
-        self.graph = build_research_graph(
+        self.graph = build_creator_graph(
             llm=self.llm,
-            tavily_client=self.tavily_client,
             settings=settings,
         )
 
-    async def run_report(self, topic: str) -> ResearchState:
+    async def run_create(
+        self,
+        prompt: str,
+        content_type: str = "reel",
+        duration_seconds: int = 30,
+        platform: str = "instagram",
+    ) -> CreatorState:
         """Run graph end-to-end and return final state."""
-        initial_state = create_initial_state(topic)
-        final_state = await self.graph.ainvoke(initial_state)
-        return ResearchState(**final_state)
+        initial = create_initial_state(prompt, content_type, duration_seconds, platform)
+        final_state = await self.graph.ainvoke(initial)
+        return CreatorState(**final_state)
 
-    async def stream_report(self, topic: str) -> AsyncGenerator[Dict[str, Any], None]:
+    async def stream_create(
+        self,
+        prompt: str,
+        content_type: str = "reel",
+        duration_seconds: int = 30,
+        platform: str = "instagram",
+    ) -> AsyncGenerator[Dict[str, Any], None]:
         """Yield structured events as each graph node updates shared state."""
-        initial_state = create_initial_state(topic)
-        current_state: Dict[str, Any] = dict(initial_state)
+        initial = create_initial_state(prompt, content_type, duration_seconds, platform)
+        current_state: Dict[str, Any] = dict(initial)
 
         yield {
             "event": "start",
-            "message": "Workflow started",
-            "topic": topic,
+            "message": "Creator pipeline started",
+            "prompt": prompt,
         }
 
-        async for update in self.graph.astream(initial_state, stream_mode="updates"):
+        async for update in self.graph.astream(initial, stream_mode="updates"):
             if not isinstance(update, dict):
                 continue
 
@@ -84,9 +100,9 @@ class ReportWorkflowService:
                     "state": current_state,
                 }
 
-        if not current_state.get("final_report"):
-            logger.warning("No final_report in stream state; recovering via ainvoke")
-            final_state = await self.graph.ainvoke(initial_state)
+        if not current_state.get("final_blueprint"):
+            logger.warning("No final_blueprint in stream state; recovering via ainvoke")
+            final_state = await self.graph.ainvoke(initial)
             current_state.update(final_state)
 
         yield {
@@ -102,7 +118,7 @@ def format_sse(event_name: str, payload: Dict[str, Any]) -> str:
 
 
 @lru_cache(maxsize=1)
-def get_report_service() -> ReportWorkflowService:
+def get_creator_service() -> CreatorWorkflowService:
     """Singleton-style dependency for FastAPI routes."""
     settings = get_settings()
-    return ReportWorkflowService(settings)
+    return CreatorWorkflowService(settings)

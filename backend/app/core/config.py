@@ -17,17 +17,15 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_name: str = "Multi-Agent Research Reporter"
+    app_name: str = "bb /create — Content Production Engine"
     api_prefix: str = "/api"
     app_env: str = "development"
 
     groq_api_key: str = Field("", description="Groq API key")
-    tavily_api_key: str = Field("", description="Tavily API key")
     groq_model: str = "llama-3.3-70b-versatile"
 
-    max_iterations: int = 3
+    max_iterations: int = 2
     min_quality_score: int = 7
-    tavily_max_results: int = 5
 
     cors_origins: List[str] = Field(
         default_factory=lambda: [

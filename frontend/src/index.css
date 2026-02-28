@@ -11,26 +11,20 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: "Inter", system-ui, -apple-system, sans-serif;
-  color: #1a1a2e;
+  color: #e2e8f0;
   overflow-x: hidden;
-  background-color: #f8fafc;
-  background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop');
+  background-color: #0f0f1a;
+  background-image: linear-gradient(rgba(15, 15, 26, 0.65), rgba(15, 15, 26, 0.8)), url('https://hips.hearstapps.com/hmg-prod/images/fuji-and-sakura-royalty-free-image-144483163-1562593125.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
+  backdrop-filter: blur(.04em);
+  -webkit-backdrop-filter: blur(2px);
 }
 
-/* ── Soft white overlay to ensure readability ── */
 body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 100%);
-  pointer-events: none;
+  display: none;
 }
-
-/* Remove old cloud layers */
 body::after {
   display: none;
 }
@@ -40,32 +34,28 @@ body::after {
   position: relative;
 }
 
-/* ── Glass panels ── */
+/* ── Glass panels (dark theme) ── */
 .glass {
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(16px) saturate(1.3);
   -webkit-backdrop-filter: blur(16px) saturate(1.3);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(24px) saturate(1.4);
   -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 
 .glass-subtle {
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(12px) saturate(1.2);
   -webkit-backdrop-filter: blur(12px) saturate(1.2);
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* ── Scrollbar ── */
@@ -77,19 +67,19 @@ body::after {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* ── Active agent glow ── */
 .glow-active {
-  box-shadow: 0 0 20px rgba(108, 71, 255, 0.12), 0 4px 12px rgba(108, 71, 255, 0.08);
+  box-shadow: 0 0 20px rgba(108, 71, 255, 0.2), 0 4px 12px rgba(108, 71, 255, 0.1);
 }
 .glow-done {
-  box-shadow: 0 0 16px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.15);
 }
 
 /* ── Stagger children animations ── */
@@ -100,9 +90,27 @@ body::after {
 .stagger > *:nth-child(5) { animation-delay: 240ms; }
 .stagger > *:nth-child(6) { animation-delay: 300ms; }
 
+/* ── Gradient text ── */
+.gradient-text {
+  background: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #f97316 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Hide Number Spinners ── */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
 /* ── Print ── */
 @media print {
-  body, body::before, body::after { background: #fff !important; }
+  body { background: #fff !important; color: #000 !important; }
   header, aside, form, button, .no-print { display: none !important; }
   .prose { max-width: 100%; }
 }
